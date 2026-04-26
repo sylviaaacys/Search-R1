@@ -13,6 +13,13 @@
 # limitations under the License.
 """
 Preprocess the nq dataset to parquet format
+#parquet format is column by column 
+name, age, city
+alice, 30, la
+
+name -> alice, bob, 
+
+#json(nested data) and csv is row based 
 """
 
 import re

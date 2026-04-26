@@ -11,6 +11,10 @@ import numpy as np
 from transformers import AutoConfig, AutoTokenizer, AutoModel
 import argparse
 import datasets
+try:
+    from search_r1.search.pubmedloader import fetch_pubmed_documents
+except ModuleNotFoundError:
+    from pubmedloader import fetch_pubmed_documents
 
 
 def load_corpus(corpus_path: str):
@@ -70,6 +74,18 @@ def pooling(
         raise NotImplementedError("Pooling method not implemented!")
 
 
+def should_normalize_embeddings(model_name: str) -> bool:
+    model_name = (model_name or "").lower()
+    return "dpr" not in model_name and "medcpt" not in model_name
+
+
+def default_pooling_method(model_name: str) -> str:
+    model_name = (model_name or "").lower()
+    if "medcpt" in model_name or "bge" in model_name:
+        return "cls"
+    return "mean"
+
+
 class Encoder:
     def __init__(self, model_name, model_path, pooling_method, max_length, use_fp16):
         self.model_name = model_name
@@ -121,7 +137,7 @@ class Encoder:
                                 output.last_hidden_state,
                                 inputs['attention_mask'],
                                 self.pooling_method)
-            if "dpr" not in self.model_name.lower():
+            if should_normalize_embeddings(self.model_name):
                 query_emb = torch.nn.functional.normalize(query_emb, dim=-1)
 
         query_emb = query_emb.detach().cpu().numpy()
@@ -308,6 +324,36 @@ class DenseRetriever(BaseRetriever):
         else:
             return results
 
+
+class PubMedRetriever(BaseRetriever):
+    def __init__(self, config):
+        super().__init__(config)
+
+    def _search(self, query: str, num: int = None, return_score = False):
+        if num is None:
+            num = self.topk
+        results, scores = fetch_pubmed_documents(query=query, topk=num)
+        if return_score:
+            return results, scores
+        return results
+
+    def _batch_search(self, query_list: List[str], num: int = None, return_score = False):
+        if isinstance(query_list, str):
+            query_list = [query_list]
+        if num is None:
+            num = self.topk
+
+        results = []
+        scores = []
+        for query in query_list:
+            item_results, item_scores = self._search(query, num=num, return_score=True)
+            results.append(item_results)
+            scores.append(item_scores)
+
+        if return_score:
+            return results, scores
+        return results
+
 def get_retriever(config):
     r"""Automatically select retriever class based on config's retrieval method
 
@@ -319,6 +365,8 @@ def get_retriever(config):
     """
     if config.retrieval_method == "bm25":
         return BM25Retriever(config)
+    elif config.retrieval_method == "pubmed":
+        return PubMedRetriever(config)
     else:
         return DenseRetriever(config)
 
@@ -352,7 +400,10 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
-    args.index_path = os.path.join(args.index_path, f'{args.retrieval_method}_Flat.index') if args.retrieval_method != 'bm25' else os.path.join(args.index_path, 'bm25')
+    if args.retrieval_method == 'bm25':
+        args.index_path = os.path.join(args.index_path, 'bm25')
+    elif args.retrieval_method != 'pubmed':
+        args.index_path = os.path.join(args.index_path, f'{args.retrieval_method}_Flat.index')
 
     # load dataset
     all_split = get_dataset(args)

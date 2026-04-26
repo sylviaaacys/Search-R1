@@ -46,6 +46,11 @@ def pooling(
         raise NotImplementedError("Pooling method not implemented!")
 
 
+def should_normalize_embeddings(model_name: str) -> bool:
+    model_name = (model_name or "").lower()
+    return "dpr" not in model_name and "medcpt" not in model_name
+
+
 def load_corpus(corpus_path: str):
     corpus = datasets.load_dataset(
             'json', 
@@ -128,7 +133,6 @@ class Index_Builder:
 
     def build_bm25_index(self):
         """Building BM25 index based on Pyserini library.
-
         Reference: https://github.com/castorini/pyserini/blob/master/docs/usage-index.md#building-a-bm25-index-direct-java-implementation
         """
 
@@ -230,7 +234,7 @@ class Index_Builder:
                                     output.last_hidden_state, 
                                     inputs['attention_mask'],
                                     self.pooling_method)
-                if  "dpr" not in self.retrieval_method:
+                if should_normalize_embeddings(self.retrieval_method):
                     embeddings = torch.nn.functional.normalize(embeddings, dim=-1)
 
             embeddings = cast(torch.Tensor, embeddings)
@@ -289,6 +293,7 @@ class Index_Builder:
 MODEL2POOLING = {
     "e5": "mean",
     "bge": "cls",
+    "medcpt": "cls",
     "contriever": "mean",
     'jina': 'mean'
 }

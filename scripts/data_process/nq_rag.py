@@ -31,7 +31,8 @@ def make_prefix(dp, template_type):
     # NOTE: also need to change reward_score/countdown.py
     if template_type == 'base':
         """This works for any base model"""
-        prefix = f"""Answer the given question with some potentially useful context. \
+        prefix = f"""
+        Answer the given question with some potentially useful context. \
 You should analyze the question carefully, evaluate the given context (which may or may not be useful), and then generate an accurate and well-reasoned response. \
 You should first have a reasoning process in mind and then provides the answer. \
 Show your reasoning in <think> </think> tags and return the final answer in <answer> </answer> tags, for example <answer> Beijing </answer>. \

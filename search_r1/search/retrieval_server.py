@@ -14,6 +14,7 @@ import datasets
 import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
+from pubmedloader import fetch_pubmed_documents
 
 def load_corpus(corpus_path: str):
     corpus = datasets.load_dataset(
@@ -270,12 +271,43 @@ class DenseRetriever(BaseRetriever):
         else:
             return results
 
+
+class PubMedRetriever(BaseRetriever):
+    def __init__(self, config):
+        super().__init__(config)
+
+    def _search(self, query: str, num: int = None, return_score: bool = False):
+        if num is None:
+            num = self.topk
+        results, scores = fetch_pubmed_documents(query=query, topk=num)
+        if return_score:
+            return results, scores
+        return results
+
+    def _batch_search(self, query_list: List[str], num: int = None, return_score: bool = False):
+        if isinstance(query_list, str):
+            query_list = [query_list]
+        if num is None:
+            num = self.topk
+
+        results = []
+        scores = []
+        for query in query_list:
+            item_results, item_scores = self._search(query, num=num, return_score=True)
+            results.append(item_results)
+            scores.append(item_scores)
+
+        if return_score:
+            return results, scores
+        return results
+
 def get_retriever(config):
     if config.retrieval_method == "bm25":
         return BM25Retriever(config)
+    if config.retrieval_method == "pubmed":
+        return PubMedRetriever(config)
     else:
         return DenseRetriever(config)
-
 
 #####################################
 # FastAPI server below
@@ -366,6 +398,8 @@ if __name__ == "__main__":
     parser.add_argument("--topk", type=int, default=3, help="Number of retrieved passages for one query.")
     parser.add_argument("--retriever_name", type=str, default="e5", help="Name of the retriever model.")
     parser.add_argument("--retriever_model", type=str, default="intfloat/e5-base-v2", help="Path of the retriever model.")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind the retrieval server to.")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind the retrieval server to.")
     parser.add_argument('--faiss_gpu', action='store_true', help='Use GPU for computation')
 
     args = parser.parse_args()
@@ -388,5 +422,5 @@ if __name__ == "__main__":
     # 2) Instantiate a global retriever so it is loaded once and reused.
     retriever = get_retriever(config)
     
-    # 3) Launch the server. By default, it listens on http://127.0.0.1:8000
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 3) Launch the server. Override --port when 8000 is already occupied.
+    uvicorn.run(app, host=args.host, port=args.port)

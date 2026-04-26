@@ -15,7 +15,6 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from googleapiclient.discovery import build
 
-
 # --- CLI Args ---
 parser = argparse.ArgumentParser(description="Launch online search server.")
 parser.add_argument('--api_key', type=str, required=True, help="API key for Google search")
@@ -68,6 +67,7 @@ async def fetch(session: aiohttp.ClientSession, url: str, semaphore: asyncio.Sem
         "Mozilla/5.0 AppleWebKit/537.36...",
         "Mozilla/5.0 (compatible; Googlebot/2.1; +https://www.google.com/bot.html)",
     ]
+
     headers = {"User-Agent": random.choice(user_agents)}
 
     async with semaphore:
@@ -149,7 +149,6 @@ class OnlineSearchEngine:
             return list(executor.map(self._retrieve_context, queries))
 
     def _retrieve_context(self, query: str) -> List[str]:
-        
         if self.config.snippet_only:
             search_results = self.search(query)
             contexts = []
@@ -164,6 +163,7 @@ class OnlineSearchEngine:
                             'document': {"contents": f'\"{title}\"\n{context}'},
                         })
         else:
+            search_results = self.search(query)
             content_dict = self.fetch_web_content(search_results)
             contexts = []
             for result in search_results:
@@ -196,7 +196,6 @@ engine = OnlineSearchEngine(config)
 def search_endpoint(request: SearchRequest):
     results = engine.batch_search(request.queries)
     return {"result": results}
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
