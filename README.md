@@ -1,7 +1,7 @@
 # MedSearch-R1: Train your LLMs to reason and call a search engine with reinforcement learning 🩺🧠
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/PeterGriffinJin/Search-R1/main/public/logo.png" alt="logo" width="300"/>
+  <img src="https://raw.githubusercontent.com/sylviaaacys/Search-R1/main/public/logo.png" alt="logo" width="300"/>
 </div>
 
 <p align="center">
