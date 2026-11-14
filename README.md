@@ -201,12 +201,6 @@ Thanks to the authors of [Search-R1](https://github.com/PeterGriffinJin/Search-R
 ## Citations
 
 ```bibtex
-@misc{chung2026evidence,
-  title={An Evidence-Informed Synthesis Agent for Medical Deep Research},
-  author={{Sylvia Chung Yan Shan}},
-  howpublished={Undergraduate thesis, Zhejiang University--University of Illinois Urbana-Champaign Institute},
-  year={2026}
-}
 
 @article{jin2025search,
   title={Search-r1: Training llms to reason and leverage search engines with reinforcement learning},
