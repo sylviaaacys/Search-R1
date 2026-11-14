@@ -11,11 +11,11 @@
   <a href="https://github.com/PeterGriffinJin/Search-R1">Search-R1</a>
 </p>
 
-**MedSearch-R1** trains a medical reasoning agent to interleave **search, evidence reading, and diagnosis** through reinforcement learning. It adapts [Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [veRL](https://github.com/volcengine/verl) to medical case reasoning.
+**MedSearch-R1** is my senior thesis project on training a medical diagnosis agent to **search for evidence, refine its reasoning, and answer**. I built it on [Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [veRL](https://github.com/volcengine/verl).
 
-This repository accompanies **“An Evidence-Informed Synthesis Agent for Medical Deep Research”**, the 2026 undergraduate thesis of **Sylvia Chung Yan Shan**, supervised by **Zuozhu Liu** at the **ZJU-UIUC Institute**.
+My thesis, **“An Evidence-Informed Synthesis Agent for Medical Deep Research”**, was supervised by **Prof. Zuozhu Liu** at the **ZJU-UIUC Institute** in 2026.
 
-The pipeline uses **Qwen2.5-3B-Instruct**, a **LoRA supervised fine-tuning cold start** on MedCaseReasoning, and **Group Relative Policy Optimization (GRPO)** with a medical retriever. The agent learns to generate focused queries, read retrieved evidence, and produce a final diagnosis.
+I start with **Qwen2.5-3B-Instruct**, apply **LoRA supervised fine-tuning** on MedCaseReasoning, and then train with **GRPO** and a medical retriever. Rather than retrieving once before answering, the agent can search again as its diagnostic hypothesis develops.
 
 ![Medical deep research training pipeline](public/medical_pipeline.png)
 
@@ -54,12 +54,12 @@ pip install wandb
 ```
 
 ### Retriever environment (optional)
-If you would like to call a local retriever as the search engine, you can install the environment as follows. (We recommend using a seperate environment.)
+For local retrieval, use a separate environment:
 ```bash
 conda create -n retriever python=3.10
 conda activate retriever
 
-# we recommend installing torch with conda for faiss-gpu
+# install torch with conda for faiss-gpu
 conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.1 -c pytorch -c nvidia
 pip install transformers datasets pyserini
 
@@ -72,7 +72,7 @@ pip install uvicorn fastapi
 
 ## Quick start
 
-The medical experiments use **MedCaseReasoning** and a **PubMed case-report corpus**, with **BM25** as the primary retriever.
+I use **MedCaseReasoning** and a **PubMed case-report corpus**, with **BM25** as the main retriever.
 
 (1) Prepare the medical QA data.
 
@@ -80,7 +80,7 @@ The medical experiments use **MedCaseReasoning** and a **PubMed case-report corp
 python scripts/data_process/create_train_data.py --local_dir ./data/medcase
 ```
 
-The current preprocessing script selects 500 training and 200 test examples. The thesis reports 1,000 training samples and a separate evaluation of 897 cases; see [experiment details](docs/thesis.md).
+The preprocessing script defaults to 500 training and 200 test examples. For my thesis experiments, I used 1,000 training samples and evaluated on 897 cases. See [training details](docs/thesis.md).
 
 (2) Build a Pyserini BM25 index for `corpus/medcase200.jsonl`, then launch the retrieval server with your index path.
 
@@ -97,13 +97,13 @@ python search_r1/search/retrieval_server.py \
 
 (3) Configure the medical GRPO training entry point.
 
-[train_grpo.sh](train_grpo.sh) selects `Med-Qwen2.5-3B-Instruct-SFT-merged` and `data/medcase/{train,test}.parquet`. Supply the SFT checkpoint and reconcile the [current configuration gaps](docs/thesis.md#implementation-status) before running training. The checked-in script is an experimental configuration, not a verified reproduction of the thesis run.
+Set the model and data paths in [train_grpo.sh](train_grpo.sh). The medical setup uses `Med-Qwen2.5-3B-Instruct-SFT-merged` and `data/medcase/{train,test}.parquet`. The current script includes settings from other experiments; check the [training notes](docs/thesis.md#implementation-status) before running it.
 
 ## Preliminary results
 
 ### Medical diagnosis
 
-Thesis Table 4.1, evaluated on **897 cases**. Predictions are extracted from `<answer>...</answer>` tags.
+I evaluated the base model, SFT model, and RL checkpoints on **897 cases**, extracting the final diagnosis from `<answer>...</answer>` tags.
 
 | Setting | Retriever | Answer tag | Normalized EM | Flexible Match |
 | --- | --- | ---: | ---: | ---: |
@@ -114,13 +114,13 @@ Thesis Table 4.1, evaluated on **897 cases**. Predictions are extracted from `<a
 | Multi-turn RL agent (checkpoint 75) | BM25 | 99.66% | 6.02% | 11.04% |
 | Multi-turn RL agent (checkpoint 90) | BM25 | 97.65% | **9.70%** | **17.73%** |
 
-Checkpoint 90 improves Normalized EM by **6.69 percentage points** and Flexible Match by **10.48 percentage points** over the base model without retrieval. Single-pass retrieval does not consistently help the SFT model.
+My best checkpoint (90) reaches **9.70% Normalized EM** and **17.73% Flexible Match**, improving over the base model without retrieval by **6.69** and **10.48 percentage points**, respectively. Single-pass retrieval does not consistently improve the SFT model.
 
-**Normalized EM** is the primary answer metric; **Flexible Match** allows relaxed matching. Answer-tag presence measures formatting, not diagnostic accuracy. [CSV](docs/results/diagnosis.csv)
+I use **Normalized EM** as the main metric and **Flexible Match** for relaxed answer matching. The answer-tag column tracks format adherence. [Full results](docs/results/diagnosis.csv)
 
 ### Retriever comparison
 
-Thesis Table 4.3, top-10 retrieval.
+I compared BM25 with MedCPT and E5. Below are the top-10 retrieval results.
 
 | Retriever | Hit Rate | MRR | Precision |
 | --- | ---: | ---: | ---: |
@@ -128,19 +128,19 @@ Thesis Table 4.3, top-10 retrieval.
 | MedCPT | 0.790 | 0.680 | 0.135 |
 | E5 | 0.826 | 0.677 | 0.122 |
 
-BM25 performs best on the entity-rich medical cases. Increasing BM25 retrieval from top-10 to top-64 raises hit rate from 0.997 to 0.998 while reducing precision from 0.231 to 0.046. The retrieval ablation's top-k values are separate from the agent's top-3 rollout setting.
+BM25 works best in these experiments, where distinctive clinical terms provide strong retrieval signals. Increasing top-k from 10 to 64 barely changes its hit rate (0.997 → 0.998), while precision drops from 0.231 to 0.046. I use top-3 retrieval during agent rollouts.
 
-[Full top-k results](docs/results/retrieval.csv). MAP and NDCG are transcribed as reported; several exceed 1, so the thesis bases its comparison primarily on Hit Rate, MRR, and Precision.
+[Full top-k results](docs/results/retrieval.csv). My original MAP and NDCG calculations include values above 1, so I use Hit Rate, MRR, and Precision for the comparison.
 
 ### Successful trajectories
 
-The thesis reports **5,849 perfect exact-match trajectories**. Case-oriented sections account for **64.1%** of retrievals in these trajectories, followed by treatment (**12.6%**). Common patterns include symptom-first search, diagnosis confirmation, and case-to-concept verification. Later training showed reduced trajectory diversity and signs of policy collapse.
+I collected **5,849 perfect exact-match trajectories** and examined how the agent searches. Case-oriented sections make up **64.1%** of retrievals, followed by treatment (**12.6%**). The agent often starts with symptoms, then searches again to confirm a candidate diagnosis. Later in training, the sampled trajectories became increasingly similar, showing signs of policy collapse.
 
 [Section distribution](docs/results/sections.csv) · [Training details](docs/thesis.md)
 
 ## Case example
 
-A supplied successful example ends with `<answer>Bell's Palsy</answer>` after two visible searches: an initial findings-based query followed by a query that adds the candidate diagnosis.
+Here is one successful trajectory. The agent first searches using clinical findings, then adds the suspected diagnosis to its second query before answering **Bell's palsy**.
 
 ```text
 Search 1: 35-year-old man acute watery diarrhea high fever altered consciousness
@@ -149,7 +149,7 @@ Search 2: [same findings] Bell's palsy
 Answer:   Bell's Palsy
 ```
 
-The example log reports **exact match: True**, **Cover EM: 1.0**, **retrieval contains answer: True**, and **reward: 1.7**. The screenshot abbreviates the original case and retrieved passages; this is an illustrative logged result.
+This trajectory receives a reward of **1.7**, with **exact match**, **Cover EM = 1.0**, and the gold answer present in the retrieved evidence.
 
 <details>
 <summary>View case example</summary>
@@ -160,11 +160,11 @@ The example log reports **exact match: True**, **Cover EM: 1.0**, **retrieval co
 
 ## Inference
 
-[infer.py](infer.py) is the inherited general-QA demo. To use a medical checkpoint, configure its `model_id`, `question`, prompt, and retrieval endpoint. A released thesis checkpoint and a medical evaluation runner are not included in this checkout.
+To try your own case, update `model_id`, `question`, the prompt, and the retrieval endpoint in [infer.py](infer.py). It currently defaults to the original Search-R1 general-QA example. The medical checkpoints and evaluation scripts are not yet included.
 
 ## Use your own dataset
 
-The medical preprocessing entry point is [create_train_data.py](scripts/data_process/create_train_data.py). It loads `zou-lab/MedCaseReasoning` and creates records in the Search-R1 format:
+I use [create_train_data.py](scripts/data_process/create_train_data.py) to load `zou-lab/MedCaseReasoning` and prepare records in the Search-R1 format:
 
 ```python
 data = {
@@ -189,7 +189,9 @@ The retriever runs separately from RL training and exposes `http://127.0.0.1:800
 {"queries": ["focused clinical findings"], "topk": 3, "return_scores": true}
 ```
 
-Local corpora use JSONL records with `id` and `contents` fields. See [retriever documentation](docs/retriever.md), [retrieval server](search_r1/search/retrieval_server.py), and [evidence formatter](search_r1/search/evidence_formatter.py). BM25, E5, and MedCPT are compared in the thesis; multi-retriever fusion, live literature search, and multimodal diagnosis are future work.
+For your own corpus, prepare JSONL records with `id` and `contents` fields. See the [retriever documentation](docs/retriever.md), [retrieval server](search_r1/search/retrieval_server.py), and [evidence formatter](search_r1/search/evidence_formatter.py).
+
+My experiments focus on BM25, E5, and MedCPT over a fixed corpus. Future directions include combining retrievers, searching live medical literature, and incorporating medical images.
 
 ## Features
 
@@ -200,13 +202,11 @@ Local corpora use JSONL records with `id` and `contents` fields. See [retriever 
 - Medical retriever and context-size ablations.
 - Analysis of successful diagnostic search trajectories.
 
-Results are thesis-reported and have not been independently rerun for this documentation update. This is a research prototype without clinical validation.
-
 ## Acknowledge
 
-This medical adaptation builds on [Search-R1](https://github.com/PeterGriffinJin/Search-R1) by Bowen Jin and collaborators and [veRL](https://github.com/volcengine/verl). The upstream framework also acknowledges [DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1), [TinyZero](https://github.com/Jiayi-Pan/TinyZero), and [RAGEN](https://github.com/ZihanWang314/RAGEN).
+I would like to thank **Prof. Zuozhu Liu** for his supervision, support, and computational resources, and **Fucheng Niu** for his guidance and helpful discussions throughout this project.
 
-Thanks to **Zuozhu Liu** for thesis supervision and **Fucheng Niu** for research guidance. The [inherited experiment logs](docs/experiment_log.md) describe upstream Search-R1 experiments.
+Thanks to the authors of [Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [veRL](https://github.com/volcengine/verl) for making their work available. This project also benefits from [DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1), [TinyZero](https://github.com/Jiayi-Pan/TinyZero), and [RAGEN](https://github.com/ZihanWang314/RAGEN). The original Search-R1 experiment logs are kept [here](docs/experiment_log.md).
 
 ## Citations
 
@@ -235,4 +235,4 @@ Thanks to **Zuozhu Liu** for thesis supervision and **Fucheng Niu** for research
 
 ## License
 
-[Apache License 2.0](LICENSE). Existing copyright and attribution notices are retained.
+[Apache License 2.0](LICENSE).
