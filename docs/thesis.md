@@ -3,7 +3,8 @@
 **Author:** Sylvia Chung Yan Shan  
 **Institution:** Zhejiang University–University of Illinois Urbana-Champaign Institute  
 **Year:** 2026
-These notes cover the training setup, results, and limitations of my senior thesis.
+
+These notes cover the training setup, results, and limitations of my project.
 
 ## Research questions
 1. Does retrieved evidence improve diagnosis compared with direct inference?
