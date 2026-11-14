@@ -11,9 +11,7 @@
   <a href="https://github.com/PeterGriffinJin/Search-R1">Search-R1</a>
 </p>
 
-**MedSearch-R1** is my senior thesis project on training a medical diagnosis agent to **search for evidence, refine its reasoning, and answer**. I built it on [Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [veRL](https://github.com/volcengine/verl).
-
-My thesis, **“An Evidence-Informed Synthesis Agent for Medical Deep Research”**, was supervised by **Prof. Zuozhu Liu** at the **ZJU-UIUC Institute** in 2026.
+**MedSearch-R1: An Evidence-Informed Synthesis Agent for Medical Deep Research”** is my project on training a medical diagnosis agent to **search for evidence, refine its reasoning, and answer**. I built it on [Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [veRL](https://github.com/volcengine/verl).
 
 I start with **Qwen2.5-3B-Instruct**, apply **LoRA supervised fine-tuning** on MedCaseReasoning, and then train with **GRPO** and a medical retriever. Rather than retrieving once before answering, the agent can search again as its diagnostic hypothesis develops.
 
@@ -22,7 +20,6 @@ I start with **Qwen2.5-3B-Instruct**, apply **LoRA supervised fine-tuning** on M
 *Six sampled rollouts interact with the retriever. Correctness, evidence matching, and format rewards guide GRPO updates, with KL regularization against a reference policy.*
 
 ## Links
-
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Preliminary results](#preliminary-results)
@@ -71,9 +68,7 @@ pip install uvicorn fastapi
 ```
 
 ## Quick start
-
 I use **MedCaseReasoning** and a **PubMed case-report corpus**, with **BM25** as the main retriever.
-
 (1) Prepare the medical QA data.
 
 ```bash
@@ -83,7 +78,6 @@ python scripts/data_process/create_train_data.py --local_dir ./data/medcase
 The preprocessing script defaults to 500 training and 200 test examples. For my thesis experiments, I used 1,000 training samples and evaluated on 897 cases. See [training details](docs/thesis.md).
 
 (2) Build a Pyserini BM25 index for `corpus/medcase200.jsonl`, then launch the retrieval server with your index path.
-
 ```bash
 conda activate retriever
 python search_r1/search/retrieval_server.py \
@@ -96,11 +90,9 @@ python search_r1/search/retrieval_server.py \
 ```
 
 (3) Configure the medical GRPO training entry point.
-
 Set the model and data paths in [train_grpo.sh](train_grpo.sh). The medical setup uses `Med-Qwen2.5-3B-Instruct-SFT-merged` and `data/medcase/{train,test}.parquet`. The current script includes settings from other experiments; check the [training notes](docs/thesis.md#implementation-status) before running it.
 
 ## Preliminary results
-
 ### Medical diagnosis
 
 I evaluated the base model, SFT model, and RL checkpoints on **897 cases**, extracting the final diagnosis from `<answer>...</answer>` tags.
