@@ -196,8 +196,6 @@ My experiments focus on BM25, E5, and MedCPT over a fixed corpus. Future directi
 
 ## Acknowledge
 
-I would like to thank **Prof. Zuozhu Liu** for his supervision, support, and computational resources, and **Fucheng Niu** for his guidance and helpful discussions throughout this project.
-
 Thanks to the authors of [Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [veRL](https://github.com/volcengine/verl) for making their work available. This project also benefits from [DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1), [TinyZero](https://github.com/Jiayi-Pan/TinyZero), and [RAGEN](https://github.com/ZihanWang314/RAGEN). The original Search-R1 experiment logs are kept [here](docs/experiment_log.md).
 
 ## Citations
