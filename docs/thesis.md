@@ -1,15 +1,11 @@
-# Senior thesis
+# An Evidence-Informed Synthesis Agent for Medical Deep Research
 
-**An Evidence-Informed Synthesis Agent for Medical Deep Research**  
 **Author:** Sylvia Chung Yan Shan  
-**Supervisor:** Zuozhu Liu  
 **Institution:** Zhejiang University–University of Illinois Urbana-Champaign Institute  
 **Year:** 2026
-
 These notes cover the training setup, results, and limitations of my senior thesis.
 
 ## Research questions
-
 1. Does retrieved evidence improve diagnosis compared with direct inference?
 2. How do retriever choice and retrieved context size affect performance?
 3. Which search and reasoning patterns appear in successful trajectories?
