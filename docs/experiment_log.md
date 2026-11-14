@@ -1,3 +1,5 @@
+> These are inherited upstream Search-R1 experiment logs. For the medical senior-thesis experiments, see [thesis details](thesis.md) and the [project results](../README.md#preliminary-results).
+
 
 ## Experiment log
 
@@ -45,3 +47,4 @@ We conduct studies on (1) reward design; (2) LLM backbone; and (3) search engine
 - Data scaling
 
 Details can be found in the [paper](https://arxiv.org/abs/2505.15117).
+

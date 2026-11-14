@@ -1,0 +1,7 @@
+setting,retriever,n_cases,answer_tag_percent,normalized_em_percent,flexible_match_percent
+Base model,None,897,98.77,3.01,7.25
+Base model,BM25,897,100.00,7.36,8.34
+SFT model,None,897,99.55,2.79,7.47
+SFT model,BM25,897,99.78,1.34,7.92
+Multi-turn RL agent (checkpoint 75),BM25,897,99.66,6.02,11.04
+Multi-turn RL agent (checkpoint 90),BM25,897,97.65,9.70,17.73
